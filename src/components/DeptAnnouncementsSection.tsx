@@ -85,15 +85,15 @@ export const DeptAnnouncementsSection: React.FC<DeptAnnouncementsSectionProps> =
   const [selectedFaculty, setSelectedFaculty] = useState<typeof DEFAULT_FACULTIES[number] | null>(null);
   const [selectedDept, setSelectedDept] = useState<{ ar: string; tr: string } | null>(null);
 
-  // File download simulation states
-  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
-  const [downloadSuccessFileId, setDownloadSuccessFileId] = useState<string | null>(null);
+  // File download simulation states (using Records to support multiple parallel downloads)
+  const [downloadingFileId, setDownloadingFileId] = useState<Record<string, boolean>>({});
+  const [downloadSuccessFileId, setDownloadSuccessFileId] = useState<Record<string, boolean>>({});
 
   const handleDownloadFile = (file: { id: string; name: string; url: string; size?: string }) => {
-    setDownloadingFileId(file.id);
+    setDownloadingFileId(prev => ({ ...prev, [file.id]: true }));
     setTimeout(() => {
-      setDownloadingFileId(null);
-      setDownloadSuccessFileId(file.id);
+      setDownloadingFileId(prev => ({ ...prev, [file.id]: false }));
+      setDownloadSuccessFileId(prev => ({ ...prev, [file.id]: true }));
       
       try {
         const link = document.createElement('a');
@@ -108,7 +108,7 @@ export const DeptAnnouncementsSection: React.FC<DeptAnnouncementsSectionProps> =
       }
 
       setTimeout(() => {
-        setDownloadSuccessFileId(null);
+        setDownloadSuccessFileId(prev => ({ ...prev, [file.id]: false }));
       }, 2000);
     }, 1000);
   };
@@ -401,8 +401,8 @@ interface AnnCardProps {
   getText: (text: any) => string;
   language: string;
   t: (key: string) => string;
-  downloadingFileId: string | null;
-  downloadSuccessFileId: string | null;
+  downloadingFileId: Record<string, boolean>;
+  downloadSuccessFileId: Record<string, boolean>;
   handleDownloadFile: (file: any) => void;
 }
 
@@ -468,21 +468,21 @@ const AnnCard: React.FC<AnnCardProps> = ({
                     
                     <button
                       onClick={() => handleDownloadFile(file)}
-                      disabled={downloadingFileId !== null}
+                      disabled={!!downloadingFileId[file.id]}
                       className={`px-2 py-0.5 rounded text-[9px] font-extrabold flex items-center gap-1 transition shrink-0 select-none ${
-                        downloadSuccessFileId === file.id
+                        downloadSuccessFileId[file.id]
                           ? 'bg-emerald-50 text-emerald-700'
-                          : downloadingFileId === file.id
+                          : downloadingFileId[file.id]
                           ? 'bg-slate-100 text-slate-400'
                           : 'bg-burgundy-50 text-burgundy-700 hover:bg-burgundy-700 hover:text-white'
                       }`}
                     >
-                      {downloadSuccessFileId === file.id ? (
+                      {downloadSuccessFileId[file.id] ? (
                         <>
                           <CheckCircle className="w-2.5 h-2.5" />
                           <span>{t('actionSuccess')}</span>
                         </>
-                      ) : downloadingFileId === file.id ? (
+                      ) : downloadingFileId[file.id] ? (
                         <span className="w-2 h-2 border border-burgundy-700 border-t-transparent rounded-full animate-spin"></span>
                       ) : (
                         <>

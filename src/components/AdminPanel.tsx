@@ -158,7 +158,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
     const updated = [...assistants, newAss];
     setAssistants(updated);
-    localStorage.setItem('pales_union_assistant_accounts', JSON.stringify(updated));
     onSaveAssistants(updated);
     setNewAssUsername('');
     setNewAssPassword('');
@@ -169,7 +168,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     if (window.confirm(language === 'ar' ? 'هل أنت متأكد من حذف هذا الحساب؟' : 'Bu hesabı silmek istediğinizden emin misiniz?')) {
       const updated = assistants.filter(acc => acc.id !== id);
       setAssistants(updated);
-      localStorage.setItem('pales_union_assistant_accounts', JSON.stringify(updated));
       onSaveAssistants(updated);
       triggerToast(language === 'ar' ? 'تم حذف الحساب بنجاح!' : 'Hesap başarıyla silindi!');
     }
@@ -844,6 +842,64 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-700">
+                      {language === 'ar' ? 'السنة الدراسية' : 'Akademik Yıl'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder={language === 'ar' ? 'السنة (بالعربية)' : 'Sınıf (Arapça)'}
+                        value={editCourseItem.year?.ar || ''}
+                        onChange={(e) => setEditCourseItem({ 
+                          ...editCourseItem, 
+                          year: { ar: e.target.value, tr: editCourseItem.year?.tr || '' } 
+                        })}
+                        className="p-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                      <input
+                        type="text"
+                        placeholder={language === 'ar' ? 'السنة (بالتركية)' : 'Sınıf (Türkçe)'}
+                        value={editCourseItem.year?.tr || ''}
+                        onChange={(e) => setEditCourseItem({ 
+                          ...editCourseItem, 
+                          year: { ar: editCourseItem.year?.ar || '', tr: e.target.value } 
+                        })}
+                        className="p-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block font-bold text-slate-700">
+                      {language === 'ar' ? 'الفصل الدراسي' : 'Dönem'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        placeholder={language === 'ar' ? 'الفصل (بالعربية)' : 'Dönem (Arapça)'}
+                        value={editCourseItem.semester?.ar || ''}
+                        onChange={(e) => setEditCourseItem({ 
+                          ...editCourseItem, 
+                          semester: { ar: e.target.value, tr: editCourseItem.semester?.tr || '' } 
+                        })}
+                        className="p-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                      <input
+                        type="text"
+                        placeholder={language === 'ar' ? 'الفصل (بالتركية)' : 'Dönem (Türkçe)'}
+                        value={editCourseItem.semester?.tr || ''}
+                        onChange={(e) => setEditCourseItem({ 
+                          ...editCourseItem, 
+                          semester: { ar: editCourseItem.semester?.ar || '', tr: e.target.value } 
+                        })}
+                        className="p-2 border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="block font-bold text-slate-700 text-xs sm:text-sm">
                     {language === 'ar' ? 'ملفات الدروس المرفقة (PDF, Word, Zip...)' : 'Ekli Ders Dosyaları (PDF, Word, Zip...)'}
@@ -924,9 +980,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <div id={`admin-course-row-${item.id}`} key={item.id} className="py-3 flex justify-between items-center gap-4 text-xs">
                       <div className="truncate flex-1">
                         <span className="font-extrabold text-slate-900 block truncate">{getText(item.title)}</span>
-                        <span className="text-[10px] text-slate-500 font-bold">
+                        <span className="text-[10px] text-slate-500 font-bold block">
                           {item.faculty && getText(item.faculty) ? `${getText(item.faculty)} - ` : ''}{getText(item.department)}
                         </span>
+                        {(item.year || item.semester) && (
+                          <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-bold inline-block mt-0.5">
+                            {item.year ? getText(item.year) : ''}{item.semester ? ` | ${getText(item.semester)}` : ''}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0 select-none">
                         <button id={`admin-course-edit-${item.id}`} onClick={() => handleStartEditCourse(item)} className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded" title={t('editBtn')}>

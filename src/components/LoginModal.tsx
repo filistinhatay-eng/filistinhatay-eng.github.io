@@ -7,9 +7,10 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLoginSuccess: () => void;
+  assistants?: any[];
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLoginSuccess, assistants = [] }) => {
   const { t } = useLanguage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -30,18 +31,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onLogin
       if (inputUser.toLowerCase() === 'filistin.hatay@gmail.com' && password === '31hatay31') {
         isValid = true;
       } else {
-        const storedAssistantsRaw = localStorage.getItem('pales_union_assistant_accounts');
-        if (storedAssistantsRaw) {
-          try {
-            const assistants = JSON.parse(storedAssistantsRaw);
-            const matched = assistants.find((acc: any) => acc.username.toLowerCase() === inputUser.toLowerCase() && acc.password === password);
-            if (matched) {
-              isValid = true;
-              loggedInUser = matched.username;
-            }
-          } catch (e) {
-            console.error(e);
-          }
+        const matched = assistants.find((acc: any) => acc.username.toLowerCase() === inputUser.toLowerCase() && acc.password === password);
+        if (matched) {
+          isValid = true;
+          loggedInUser = matched.username;
         }
       }
 

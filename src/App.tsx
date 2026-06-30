@@ -66,7 +66,7 @@ function AppMain() {
     }
   };
 
-  // Load Initial Data from Server with LocalStorage Fallback & Seeding
+  // Load Initial Data from Server with Seeding (No LocalStorage for shared content)
   useEffect(() => {
     const initializeData = async () => {
       let loadedNews = null;
@@ -98,119 +98,82 @@ function AppMain() {
         console.error("Error loading server site data", err);
       }
 
-      // Apply loaded data or fallback to local & seed
+      const toSave: any = {};
+
+      // 1. News
       if (loadedNews) {
         setNews(loadedNews);
-        localStorage.setItem('pales_union_news', JSON.stringify(loadedNews));
       } else {
-        const local = localStorage.getItem('pales_union_news');
-        if (local) setNews(JSON.parse(local));
-        else {
-          setNews(initialNews);
-          localStorage.setItem('pales_union_news', JSON.stringify(initialNews));
-          saveToServer({ news: initialNews });
-        }
+        setNews(initialNews);
+        toSave.news = initialNews;
       }
 
+      // 2. Courses
       if (loadedCourses) {
         setCourses(loadedCourses);
-        localStorage.setItem('pales_union_courses', JSON.stringify(loadedCourses));
       } else {
-        const local = localStorage.getItem('pales_union_courses');
-        if (local) setCourses(JSON.parse(local));
-        else {
-          setCourses(initialCourses);
-          localStorage.setItem('pales_union_courses', JSON.stringify(initialCourses));
-          saveToServer({ courses: initialCourses });
-        }
+        setCourses(initialCourses);
+        toSave.courses = initialCourses;
       }
 
+      // 3. Department Announcements
       if (loadedDeptAnn) {
         setDeptAnnouncements(loadedDeptAnn);
-        localStorage.setItem('pales_union_dept_announcements', JSON.stringify(loadedDeptAnn));
       } else {
-        const local = localStorage.getItem('pales_union_dept_announcements');
-        if (local) setDeptAnnouncements(JSON.parse(local));
-        else {
-          setDeptAnnouncements(initialDeptAnnouncements);
-          localStorage.setItem('pales_union_dept_announcements', JSON.stringify(initialDeptAnnouncements));
-          saveToServer({ deptAnnouncements: initialDeptAnnouncements });
-        }
+        setDeptAnnouncements(initialDeptAnnouncements);
+        toSave.deptAnnouncements = initialDeptAnnouncements;
       }
 
+      // 4. Activities
       if (loadedActivities) {
         setActivities(loadedActivities);
-        localStorage.setItem('pales_union_activities', JSON.stringify(loadedActivities));
       } else {
-        const local = localStorage.getItem('pales_union_activities');
-        if (local) setActivities(JSON.parse(local));
-        else {
-          setActivities(initialActivities);
-          localStorage.setItem('pales_union_activities', JSON.stringify(initialActivities));
-          saveToServer({ activities: initialActivities });
-        }
+        setActivities(initialActivities);
+        toSave.activities = initialActivities;
       }
 
+      // 5. Links
       if (loadedLinks) {
         setLinks(loadedLinks);
-        localStorage.setItem('pales_union_links', JSON.stringify(loadedLinks));
       } else {
-        const local = localStorage.getItem('pales_union_links');
-        if (local) {
-          setLinks(JSON.parse(local));
-        } else {
-          setLinks(initialImportantLinks);
-          localStorage.setItem('pales_union_links', JSON.stringify(initialImportantLinks));
-          saveToServer({ links: initialImportantLinks });
-        }
+        setLinks(initialImportantLinks);
+        toSave.links = initialImportantLinks;
       }
 
+      // 6. University Info
       if (loadedUniv) {
         setUnivInfo(loadedUniv);
-        localStorage.setItem('pales_union_univ', JSON.stringify(loadedUniv));
       } else {
-        const local = localStorage.getItem('pales_union_univ');
-        if (local) {
-          const parsed = JSON.parse(local);
-          if (parsed.contactEmail === "iso@iste.edu.tr") {
-            parsed.contactEmail = "filistin.hatay@gmail.com";
-          }
-          setUnivInfo(parsed);
-          localStorage.setItem('pales_union_univ', JSON.stringify(parsed));
-        } else {
-          setUnivInfo(initialUniversityInfo);
-          localStorage.setItem('pales_union_univ', JSON.stringify(initialUniversityInfo));
-          saveToServer({ univInfo: initialUniversityInfo });
-        }
+        setUnivInfo(initialUniversityInfo);
+        toSave.univInfo = initialUniversityInfo;
       }
 
+      // 7. Announcements
       if (loadedAnn) {
         setAnnouncements(loadedAnn);
-        localStorage.setItem('pales_union_announcements', JSON.stringify(loadedAnn));
       } else {
-        const local = localStorage.getItem('pales_union_announcements');
-        if (local) setAnnouncements(JSON.parse(local));
-        else {
-          setAnnouncements(initialAnnouncements);
-          localStorage.setItem('pales_union_announcements', JSON.stringify(initialAnnouncements));
-          saveToServer({ announcements: initialAnnouncements });
-        }
+        setAnnouncements(initialAnnouncements);
+        toSave.announcements = initialAnnouncements;
       }
 
+      // 8. Logo
       if (loadedLogo) {
         setLogo(loadedLogo);
-        localStorage.setItem('pales_union_custom_logo', loadedLogo);
       } else {
-        const local = localStorage.getItem('pales_union_custom_logo');
-        if (local) setLogo(local);
+        setLogo(logoImg);
+        toSave.logo = logoImg;
       }
 
+      // 9. Assistants
       if (loadedAssistants) {
         setAssistants(loadedAssistants);
-        localStorage.setItem('pales_union_assistant_accounts', JSON.stringify(loadedAssistants));
       } else {
-        const local = localStorage.getItem('pales_union_assistant_accounts');
-        if (local) setAssistants(JSON.parse(local));
+        setAssistants([]);
+        toSave.assistants = [];
+      }
+
+      if (Object.keys(toSave).length > 0) {
+        saveToServer(toSave);
       }
     };
 
@@ -220,49 +183,41 @@ function AppMain() {
   // Sync helpers with server sync
   const updateNewsState = (newNews: NewsItem[]) => {
     setNews(newNews);
-    localStorage.setItem('pales_union_news', JSON.stringify(newNews));
     saveToServer({ news: newNews });
   };
 
   const updateCoursesState = (newCourses: CourseItem[]) => {
     setCourses(newCourses);
-    localStorage.setItem('pales_union_courses', JSON.stringify(newCourses));
     saveToServer({ courses: newCourses });
   };
 
   const updateDeptAnnState = (newDeptAnns: DeptAnnouncementItem[]) => {
     setDeptAnnouncements(newDeptAnns);
-    localStorage.setItem('pales_union_dept_announcements', JSON.stringify(newDeptAnns));
     saveToServer({ deptAnnouncements: newDeptAnns });
   };
 
   const updateActivitiesState = (newActs: ActivityItem[]) => {
     setActivities(newActs);
-    localStorage.setItem('pales_union_activities', JSON.stringify(newActs));
     saveToServer({ activities: newActs });
   };
 
   const updateLinksState = (newLinks: ImportantLink[]) => {
     setLinks(newLinks);
-    localStorage.setItem('pales_union_links', JSON.stringify(newLinks));
     saveToServer({ links: newLinks });
   };
 
   const updateUnivState = (newUniv: UniversityInfo) => {
     setUnivInfo(newUniv);
-    localStorage.setItem('pales_union_univ', JSON.stringify(newUniv));
     saveToServer({ univInfo: newUniv });
   };
 
   const updateAnnState = (newAnns: TopAnnouncement[]) => {
     setAnnouncements(newAnns);
-    localStorage.setItem('pales_union_announcements', JSON.stringify(newAnns));
     saveToServer({ announcements: newAnns });
   };
 
   const updateAssistantsState = (newAssistants: any[]) => {
     setAssistants(newAssistants);
-    localStorage.setItem('pales_union_assistant_accounts', JSON.stringify(newAssistants));
     saveToServer({ assistants: newAssistants });
   };
 
@@ -459,7 +414,6 @@ function AppMain() {
             assistants={assistants}
             onSaveLogo={(newLogo: string) => {
               setLogo(newLogo);
-              localStorage.setItem('pales_union_custom_logo', newLogo);
               saveToServer({ logo: newLogo });
             }}
             onSaveNews={handleSaveNewsItem}
@@ -529,6 +483,7 @@ function AppMain() {
         isOpen={isLoginOpen}
         onClose={() => setIsLoginOpen(false)}
         onLoginSuccess={handleLoginSuccess}
+        assistants={assistants}
       />
 
     </div>

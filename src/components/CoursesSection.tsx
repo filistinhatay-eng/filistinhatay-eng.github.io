@@ -85,11 +85,11 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses }) => {
   const [selectedFaculty, setSelectedFaculty] = useState<typeof DEFAULT_FACULTIES[number] | null>(null);
   const [selectedDept, setSelectedDept] = useState<{ ar: string; tr: string } | null>(null);
 
-  // File download simulation states
-  const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
-  const [downloadSuccessFileId, setDownloadSuccessFileId] = useState<string | null>(null);
-  const [downloadingFileObjId, setDownloadingFileObjId] = useState<string | null>(null);
-  const [downloadSuccessFileObjId, setDownloadSuccessFileObjId] = useState<string | null>(null);
+  // File download simulation states (using Records to support multiple parallel downloads)
+  const [downloadingFileId, setDownloadingFileId] = useState<Record<string, boolean>>({});
+  const [downloadSuccessFileId, setDownloadSuccessFileId] = useState<Record<string, boolean>>({});
+  const [downloadingFileObjId, setDownloadingFileObjId] = useState<Record<string, boolean>>({});
+  const [downloadSuccessFileObjId, setDownloadSuccessFileObjId] = useState<Record<string, boolean>>({});
 
   // Expanded folders tracker
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
@@ -103,15 +103,16 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses }) => {
   };
 
   const handleDownloadFileObj = (file: { id: string; name: string; url: string; size?: string }) => {
-    setDownloadingFileObjId(file.id);
+    setDownloadingFileObjId(prev => ({ ...prev, [file.id]: true }));
     setTimeout(() => {
-      setDownloadingFileObjId(null);
-      setDownloadSuccessFileObjId(file.id);
+      setDownloadingFileObjId(prev => ({ ...prev, [file.id]: false }));
+      setDownloadSuccessFileObjId(prev => ({ ...prev, [file.id]: true }));
       
       try {
         const link = document.createElement('a');
         link.href = file.url;
         link.download = file.name;
+        link.target = "_blank";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -120,17 +121,17 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses }) => {
       }
 
       setTimeout(() => {
-        setDownloadSuccessFileObjId(null);
+        setDownloadSuccessFileObjId(prev => ({ ...prev, [file.id]: false }));
       }, 2000);
     }, 1000);
   };
 
   const handleDownloadFile = (file: DriveFile) => {
-    setDownloadingFileId(file.id);
+    setDownloadingFileId(prev => ({ ...prev, [file.id]: true }));
     
     setTimeout(() => {
-      setDownloadingFileId(null);
-      setDownloadSuccessFileId(file.id);
+      setDownloadingFileId(prev => ({ ...prev, [file.id]: false }));
+      setDownloadSuccessFileId(prev => ({ ...prev, [file.id]: true }));
       
       try {
         const content = `[İSTE Filistin Öğrenci Topluluğu / تجمع الطلاب الفلسطينيين]\nالمادة: ${file.name.ar}\nDers: ${file.name.tr}\nSize/الحجم: ${file.size || 'N/A'}\n\nتم تحميل هذا الملف الدراسي المرتّب بنجاح من مجلد الدرايف المشترك الخاص بالمادة.`;
@@ -149,7 +150,7 @@ export const CoursesSection: React.FC<CoursesSectionProps> = ({ courses }) => {
       }
 
       setTimeout(() => {
-        setDownloadSuccessFileId(null);
+        setDownloadSuccessFileId(prev => ({ ...prev, [file.id]: false }));
       }, 2000);
     }, 1200);
   };
@@ -454,10 +455,10 @@ interface CourseCardProps {
   t: (key: string) => string;
   expandedFolders: Record<string, boolean>;
   toggleFolder: (courseId: string, folderId: string) => void;
-  downloadingFileId: string | null;
-  downloadSuccessFileId: string | null;
-  downloadingFileObjId: string | null;
-  downloadSuccessFileObjId: string | null;
+  downloadingFileId: Record<string, boolean>;
+  downloadSuccessFileId: Record<string, boolean>;
+  downloadingFileObjId: Record<string, boolean>;
+  downloadSuccessFileObjId: Record<string, boolean>;
   handleDownloadFile: (file: DriveFile) => void;
   handleDownloadFileObj: (file: any) => void;
 }
@@ -473,7 +474,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
       
       <div className="space-y-4 relative z-10">
         <div className="flex flex-wrap items-center justify-between gap-2 text-[9px] select-none">
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {item.faculty && (
               <span className="bg-amber-50 text-amber-800 font-extrabold px-2 py-0.5 rounded border border-amber-100/50">
                 {getText(item.faculty)}
@@ -482,6 +483,18 @@ const CourseCard: React.FC<CourseCardProps> = ({
             <span className="bg-burgundy-50 text-burgundy-700 font-extrabold px-2 py-0.5 rounded border border-burgundy-100/50">
               {getText(item.department)}
             </span>
+            {item.year && (
+              <span className="bg-emerald-50 text-emerald-800 font-extrabold px-2 py-0.5 rounded border border-emerald-100/50 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                {getText(item.year)}
+              </span>
+            )}
+            {item.semester && (
+              <span className="bg-indigo-50 text-indigo-800 font-extrabold px-2 py-0.5 rounded border border-indigo-100/50 flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                {getText(item.semester)}
+              </span>
+            )}
           </div>
           <span className="text-burgundy-700 font-bold animate-pulse">✦</span>
         </div>
@@ -525,21 +538,21 @@ const CourseCard: React.FC<CourseCardProps> = ({
                   
                   <button
                     onClick={() => handleDownloadFileObj(file)}
-                    disabled={downloadingFileObjId !== null}
+                    disabled={!!downloadingFileObjId[file.id]}
                     className={`px-2 py-0.5 rounded text-[9px] font-extrabold flex items-center gap-1 transition shrink-0 select-none ${
-                      downloadSuccessFileObjId === file.id
+                      downloadSuccessFileObjId[file.id]
                         ? 'bg-emerald-50 text-emerald-700'
-                        : downloadingFileObjId === file.id
+                        : downloadingFileObjId[file.id]
                         ? 'bg-slate-100 text-slate-400'
                         : 'bg-burgundy-50 text-burgundy-700 hover:bg-burgundy-700 hover:text-white'
                     }`}
                   >
-                    {downloadSuccessFileObjId === file.id ? (
+                    {downloadSuccessFileObjId[file.id] ? (
                       <>
                         <CheckCircle className="w-2.5 h-2.5" />
                         <span>{t('actionSuccess')}</span>
                       </>
-                    ) : downloadingFileObjId === file.id ? (
+                    ) : downloadingFileObjId[file.id] ? (
                       <span className="w-2 h-2 border border-burgundy-700 border-t-transparent rounded-full animate-spin"></span>
                     ) : (
                       <>
@@ -584,11 +597,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
                                 <span className="truncate font-bold pr-1" title={getText(file.name)}>{getText(file.name)}</span>
                                 <button
                                   onClick={() => handleDownloadFile(file)}
-                                  disabled={downloadingFileId !== null}
+                                  disabled={!!downloadingFileId[file.id]}
                                   className="px-1.5 py-0.2 bg-burgundy-50 text-burgundy-700 hover:bg-burgundy-700 hover:text-white rounded text-[8px] font-extrabold flex items-center gap-0.5 transition"
                                 >
-                                  {downloadSuccessFileId === file.id ? <CheckCircle className="w-2 h-2" /> : <Download className="w-2 h-2" />}
-                                  <span>{downloadSuccessFileId === file.id ? t('actionSuccess') : (language === 'ar' ? 'تحميل' : 'İndir')}</span>
+                                  {downloadSuccessFileId[file.id] ? <CheckCircle className="w-2 h-2" /> : <Download className="w-2 h-2" />}
+                                  <span>{downloadSuccessFileId[file.id] ? t('actionSuccess') : (language === 'ar' ? 'تحميل' : 'İndir')}</span>
                                 </button>
                               </div>
                             ))}

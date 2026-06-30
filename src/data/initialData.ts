@@ -185,6 +185,8 @@ export const initialCourses: CourseItem[] = [
     externalUrl: "https://visualgo.net",
     driveUrl: "https://drive.google.com/drive/folders/1a2b3c4d5e6f7g8h9i0j-sample-algorithms",
     dateAdded: "2026-06-22",
+    year: { ar: "السنة الثانية", tr: "2. Sınıf" },
+    semester: { ar: "الفصل الأول (خريف)", tr: "Güz Dönemi" },
     driveFolders: [
       {
         id: "f1-c1",
@@ -265,6 +267,8 @@ export const initialCourses: CourseItem[] = [
     externalUrl: "https://www.turkcedersi.com",
     driveUrl: "https://drive.google.com/drive/folders/1x2y3z4a5b6c7d8e9f-sample-turkish",
     dateAdded: "2026-06-15",
+    year: { ar: "السنة التحضيرية", tr: "Hazırlık Sınıfı" },
+    semester: { ar: "الفصل الأول (خريف)", tr: "Güz Dönemi" },
     driveFolders: [
       {
         id: "f2-c1",
@@ -334,6 +338,8 @@ export const initialCourses: CourseItem[] = [
     videoUrl: "https://www.youtube.com/watch?v=W_YgPZ08oOQ",
     driveUrl: "https://drive.google.com/drive/folders/1m2n3o4p5q6r7s8t9u-sample-calculus",
     dateAdded: "2026-06-10",
+    year: { ar: "السنة الأولى", tr: "1. Sınıf" },
+    semester: { ar: "الفصل الأول (خريف)", tr: "Güz Dönemi" },
     driveFolders: [
       {
         id: "f3-c1",

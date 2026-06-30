@@ -51,6 +51,8 @@ export interface CourseItem {
   dateAdded: string;
   driveUrl?: string; // Real or simulated Google Drive folder link
   driveFolders?: DriveFolder[]; // Organized folder hierarchy
+  year?: MultilingualText;
+  semester?: MultilingualText;
 }
 
 export interface ActivityItem {

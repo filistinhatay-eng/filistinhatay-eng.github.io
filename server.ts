@@ -106,8 +106,11 @@ const fallbackNews: UniversityNewsItem[] = [
 async function startServer() {
   const app = express();
 
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+ // زيادة حد استقبال بيانات الـ JSON إلى 50 ميجابايت
+app.use(express.json({ limit: '50mb' }));
+
+// زيادة حد استقبال البيانات المرسلة عبر الـ URL إلى 50 ميجابايت
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
   // API Routes for persisting custom portal data
   app.get('/api/site-data', (req, res) => {

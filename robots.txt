@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://filistinhatay-gt-tc.vercel.app/sitemap.xml

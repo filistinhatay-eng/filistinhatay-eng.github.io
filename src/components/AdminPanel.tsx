@@ -210,7 +210,48 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === 'string') {
-          setter(reader.result);
+          const originalBase64 = reader.result;
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+
+              // Target maximum dimension for web display (800px)
+              const maxDimension = 800;
+              if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                  height = Math.round((height * maxDimension) / width);
+                  width = maxDimension;
+                } else {
+                  width = Math.round((width * maxDimension) / height);
+                  height = maxDimension;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+              if (ctx) {
+                ctx.drawImage(img, 0, 0, width, height);
+                // Compress to JPEG format with 0.7 quality
+                // This reduces multi-megabyte files down to ~30KB - 80KB!
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                setter(compressedDataUrl);
+              } else {
+                setter(originalBase64);
+              }
+            } catch (err) {
+              console.error('Image compression failed, falling back to original:', err);
+              setter(originalBase64);
+            }
+          };
+          img.onerror = () => {
+            setter(originalBase64);
+          };
+          img.src = originalBase64;
         }
       };
       reader.readAsDataURL(file);
@@ -1731,18 +1772,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              if (typeof reader.result === 'string') {
-                                setEditActivityItem({ ...editActivityItem, image: reader.result });
-                              }
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
+                        onChange={(e) => handleImageUpload(e, (url) => setEditActivityItem({ ...editActivityItem, image: url }))}
                         className="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer"
                       />
                     </div>
@@ -2254,19 +2284,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   id="logo-upload-input"
                   type="file"
                   accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        if (typeof reader.result === 'string') {
-                          onSaveLogo(reader.result);
-                          triggerToast(language === 'ar' ? 'تم تحديث الشعار بنجاح!' : 'Logo başarıyla güncellendi!');
-                        }
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
+                  onChange={(e) => handleImageUpload(e, (url) => {
+                    onSaveLogo(url);
+                    triggerToast(language === 'ar' ? 'تم تحديث الشعار بنجاح!' : 'Logo başarıyla güncellendi!');
+                  })}
                   className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer"
                 />
               </div>

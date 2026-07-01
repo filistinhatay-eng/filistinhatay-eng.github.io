@@ -31,6 +31,10 @@ import {
   initialImportantLinks, initialUniversityInfo, initialAnnouncements 
 } from './data/initialData';
 
+import { db } from './firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+
 function AppMain() {
   const { t, dir } = useLanguage();
   const [currentTab, setCurrentTab] = useState<string>('home');
@@ -116,45 +120,134 @@ function AppMain() {
     }
   });
 
-  // Sync helpers with local storage to persist modifications directly and instantly
+  // Helper to save updates to Firestore with merge capability
+  const saveToFirestore = async (updates: any) => {
+    try {
+      const docRef = doc(db, 'portal_data', 'global_settings');
+      await setDoc(docRef, updates, { merge: true });
+      console.log('Saved to Firestore successfully:', Object.keys(updates));
+    } catch (err) {
+      console.error('Failed to save to Firestore:', err);
+    }
+  };
+
+  // Load and synchronize data from Firestore on application load
+  useEffect(() => {
+    const loadFirestoreData = async () => {
+      try {
+        const docRef = doc(db, 'portal_data', 'global_settings');
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.news) {
+            setNews(data.news);
+            localStorage.setItem('pales_union_news', JSON.stringify(data.news));
+          }
+          if (data.courses) {
+            setCourses(data.courses);
+            localStorage.setItem('pales_union_courses', JSON.stringify(data.courses));
+          }
+          if (data.deptAnnouncements) {
+            setDeptAnnouncements(data.deptAnnouncements);
+            localStorage.setItem('pales_union_dept_announcements', JSON.stringify(data.deptAnnouncements));
+          }
+          if (data.activities) {
+            setActivities(data.activities);
+            localStorage.setItem('pales_union_activities', JSON.stringify(data.activities));
+          }
+          if (data.links) {
+            setLinks(data.links);
+            localStorage.setItem('pales_union_links', JSON.stringify(data.links));
+          }
+          if (data.univInfo) {
+            setUnivInfo(data.univInfo);
+            localStorage.setItem('pales_union_univ_info', JSON.stringify(data.univInfo));
+          }
+          if (data.announcements) {
+            setAnnouncements(data.announcements);
+            localStorage.setItem('pales_union_announcements', JSON.stringify(data.announcements));
+          }
+          if (data.logo) {
+            setLogo(data.logo);
+            localStorage.setItem('pales_union_custom_logo', data.logo);
+          }
+          if (data.assistants) {
+            setAssistants(data.assistants);
+            localStorage.setItem('pales_union_assistants', JSON.stringify(data.assistants));
+          }
+          console.log('Synchronized application state with Firestore data successfully');
+        } else {
+          // Document does not exist yet (first-time deployment). Let's seed it.
+          const seedPayload = {
+            news: initialNews,
+            courses: initialCourses,
+            deptAnnouncements: initialDeptAnnouncements,
+            activities: initialActivities,
+            links: initialImportantLinks,
+            univInfo: initialUniversityInfo,
+            announcements: initialAnnouncements,
+            logo: logoImg,
+            assistants: []
+          };
+          await setDoc(docRef, seedPayload);
+          console.log('Seeded Firestore with initial configuration data successfully');
+        }
+      } catch (err) {
+        console.error('Error synchronizing with Firestore:', err);
+      }
+    };
+
+    loadFirestoreData();
+  }, []);
+
+  // Sync helpers with local storage and Firestore to persist modifications globally
   const updateNewsState = (newNews: NewsItem[]) => {
     setNews(newNews);
     localStorage.setItem('pales_union_news', JSON.stringify(newNews));
+    saveToFirestore({ news: newNews });
   };
 
   const updateCoursesState = (newCourses: CourseItem[]) => {
     setCourses(newCourses);
     localStorage.setItem('pales_union_courses', JSON.stringify(newCourses));
+    saveToFirestore({ courses: newCourses });
   };
 
   const updateDeptAnnState = (newDeptAnns: DeptAnnouncementItem[]) => {
     setDeptAnnouncements(newDeptAnns);
     localStorage.setItem('pales_union_dept_announcements', JSON.stringify(newDeptAnns));
+    saveToFirestore({ deptAnnouncements: newDeptAnns });
   };
 
   const updateActivitiesState = (newActs: ActivityItem[]) => {
     setActivities(newActs);
     localStorage.setItem('pales_union_activities', JSON.stringify(newActs));
+    saveToFirestore({ activities: newActs });
   };
 
   const updateLinksState = (newLinks: ImportantLink[]) => {
     setLinks(newLinks);
     localStorage.setItem('pales_union_links', JSON.stringify(newLinks));
+    saveToFirestore({ links: newLinks });
   };
 
   const updateUnivState = (newUniv: UniversityInfo) => {
     setUnivInfo(newUniv);
     localStorage.setItem('pales_union_univ_info', JSON.stringify(newUniv));
+    saveToFirestore({ univInfo: newUniv });
   };
 
   const updateAnnState = (newAnns: TopAnnouncement[]) => {
     setAnnouncements(newAnns);
     localStorage.setItem('pales_union_announcements', JSON.stringify(newAnns));
+    saveToFirestore({ announcements: newAnns });
   };
 
   const updateAssistantsState = (newAssistants: any[]) => {
     setAssistants(newAssistants);
     localStorage.setItem('pales_union_assistants', JSON.stringify(newAssistants));
+    saveToFirestore({ assistants: newAssistants });
   };
 
   // ADMIN OPERATIONS: NEWS
@@ -351,6 +444,7 @@ function AppMain() {
             onSaveLogo={(newLogo: string) => {
               setLogo(newLogo);
               localStorage.setItem('pales_union_custom_logo', newLogo);
+              saveToFirestore({ logo: newLogo });
             }}
             onSaveNews={handleSaveNewsItem}
             onDeleteNews={handleDeleteNewsItem}

@@ -1,0 +1,50 @@
+{
+  "entities": {
+    "GlobalSettings": {
+      "title": "GlobalSettings",
+      "description": "Global settings and content for the Palestinian Student Union portal",
+      "type": "object",
+      "properties": {
+        "news": {
+          "type": "array",
+          "description": "List of news items"
+        },
+        "courses": {
+          "type": "array",
+          "description": "Academic courses list"
+        },
+        "deptAnnouncements": {
+          "type": "array",
+          "description": "Departmental announcements"
+        },
+        "activities": {
+          "type": "array",
+          "description": "Activities and events"
+        },
+        "links": {
+          "type": "array",
+          "description": "Important links list"
+        },
+        "univInfo": {
+          "type": "object",
+          "description": "University details"
+        },
+        "announcements": {
+          "type": "array",
+          "description": "Top-bar alert banners/announcements"
+        },
+        "logo": {
+          "type": "string",
+          "description": "Base64 or URL of the portal logo"
+        }
+      },
+      "required": []
+    }
+  },
+  "firestore": {
+    "/portal_data/{settingId}": {
+      "schema": "GlobalSettings",
+      "description": "Global settings and dynamic portal documents"
+    }
+  }
+}

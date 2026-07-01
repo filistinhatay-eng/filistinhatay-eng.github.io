@@ -3,7 +3,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Phone, Mail, MapPin, Sparkles } from 'lucide-react';
 import { UniversityInfo } from '../types';
 // @ts-ignore
-import logoImg from '../assets/images/hatay_palestine_students_logo_1782669469763.jpg';
+import logoImg from '../assets/images/logo.jpeg';
 
 interface FooterProps {
   logo: string;

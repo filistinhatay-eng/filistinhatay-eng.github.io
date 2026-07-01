@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net: Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Portal Data Access: Allow reading and writing only for the specific 'global_settings' document
+    match /portal_data/{settingId} {
+      allow read, write: if settingId == "global_settings";
+    }
+  }
+}

@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Globe, Lock, LayoutDashboard, LogOut, Award, Menu, X, Bell, BookOpen, Home, Newspaper, Link, Compass, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 // @ts-ignore
-import logoImg from '../assets/images/hatay_palestine_students_logo_1782669469763.jpg';
+import logoImg from '../assets/images/logo.jpeg';
 
 interface NavbarProps {
   currentTab: string;

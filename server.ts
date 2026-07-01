@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 
 interface UniversityNewsItem {
   id: string;
@@ -18,6 +20,26 @@ interface UniversityNewsItem {
 }
 
 const PORT = 3000;
+
+// Initialize Firebase Web SDK
+let db: any = null;
+try {
+  const firebaseConfigPath = path.join(process.cwd(), 'firebase-applet-config.json');
+  if (fs.existsSync(firebaseConfigPath)) {
+    const config = JSON.parse(fs.readFileSync(firebaseConfigPath, 'utf8'));
+    const app = initializeApp(config);
+    if (config.firestoreDatabaseId) {
+      db = getFirestore(app, config.firestoreDatabaseId);
+    } else {
+      db = getFirestore(app);
+    }
+    console.log('Firebase Firestore Web SDK initialized successfully on backend.');
+  } else {
+    console.warn('firebase-applet-config.json not found, falling back to local file storage.');
+  }
+} catch (error) {
+  console.error('Failed to initialize Firebase on backend:', error);
+}
 
 // Lazy initialization of Gemini client
 let aiInstance: GoogleGenAI | null = null;
@@ -106,15 +128,31 @@ const fallbackNews: UniversityNewsItem[] = [
 async function startServer() {
   const app = express();
 
- // زيادة حد استقبال بيانات الـ JSON إلى 50 ميجابايت
-app.use(express.json({ limit: '50mb' }));
-
-// زيادة حد استقبال البيانات المرسلة عبر الـ URL إلى 50 ميجابايت
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
   // API Routes for persisting custom portal data
-  app.get('/api/site-data', (req, res) => {
+  app.get('/api/site-data', async (req, res) => {
     try {
+      if (db) {
+        const docRef = doc(db, 'portal_data', 'global_settings');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          return res.json({ success: true, siteData: docSnap.data() });
+        } else {
+          // Seed from local file if Firestore document is empty
+          const filePath = path.join(process.cwd(), 'site-data.json');
+          if (fs.existsSync(filePath)) {
+            const content = fs.readFileSync(filePath, 'utf8');
+            const parsed = JSON.parse(content);
+            await setDoc(docRef, parsed);
+            return res.json({ success: true, siteData: parsed });
+          }
+          return res.json({ success: true, siteData: null });
+        }
+      }
+
+      // Local fallback
       const filePath = path.join(process.cwd(), 'site-data.json');
       if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf8');
@@ -123,14 +161,35 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
       }
       return res.json({ success: true, siteData: null });
     } catch (err) {
-      console.error('Error reading site-data.json:', err);
+      console.error('Error reading site data:', err);
       res.status(500).json({ success: false, error: 'Failed to read site data' });
     }
   });
 
-  app.post('/api/site-data', (req, res) => {
+  app.post('/api/site-data', async (req, res) => {
     try {
       const updates = req.body;
+      if (db) {
+        const docRef = doc(db, 'portal_data', 'global_settings');
+        const docSnap = await getDoc(docRef);
+        let currentData: any = {};
+        if (docSnap.exists()) {
+          currentData = docSnap.data();
+        } else {
+          // seed from local file if Firestore document is empty
+          const filePath = path.join(process.cwd(), 'site-data.json');
+          if (fs.existsSync(filePath)) {
+            try {
+              currentData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            } catch (e) {}
+          }
+        }
+        const mergedData = { ...currentData, ...updates };
+        await setDoc(docRef, mergedData);
+        return res.json({ success: true });
+      }
+
+      // Local fallback
       const filePath = path.join(process.cwd(), 'site-data.json');
       let currentData: any = {};
       if (fs.existsSync(filePath)) {
@@ -145,7 +204,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
       fs.writeFileSync(filePath, JSON.stringify(mergedData, null, 2), 'utf8');
       res.json({ success: true });
     } catch (err) {
-      console.error('Error saving site-data.json:', err);
+      console.error('Error saving site data:', err);
       res.status(500).json({ success: false, error: 'Failed to save site data' });
     }
   });

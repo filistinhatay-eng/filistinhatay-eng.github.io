@@ -19,7 +19,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { LoginModal } from './components/LoginModal';
 import { DeptAnnouncementsSection } from './components/DeptAnnouncementsSection';
 // @ts-ignore
-import logoImg from './assets/images/hatay_palestine_students_logo_1782669469763.jpg';
+import logoImg from './assets/images/logo.jpeg';
 
 import { 
   NewsItem, CourseItem, DeptAnnouncementItem, ActivityItem, ImportantLink, 
@@ -157,7 +157,7 @@ function AppMain() {
       }
 
       // 8. Logo
-      if (loadedLogo) {
+      if (loadedLogo && !loadedLogo.includes('hatay_palestine_students_logo')) {
         setLogo(loadedLogo);
       } else {
         setLogo(logoImg);

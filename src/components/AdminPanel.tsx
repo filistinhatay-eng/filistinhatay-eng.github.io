@@ -182,6 +182,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editUnivInfo, setEditUnivInfo] = useState<UniversityInfo | null>(null);
   const [editAnnItem, setEditAnnItem] = useState<Partial<TopAnnouncement> | null>(null);
 
+  // States for manual external links and file size validation
+  const [courseLinkName, setCourseLinkName] = useState('');
+  const [courseLinkUrl, setCourseLinkUrl] = useState('');
+  const [fileErrorMsg, setFileErrorMsg] = useState<string | null>(null);
+
+  const [deptLinkName, setDeptLinkName] = useState('');
+  const [deptLinkUrl, setDeptLinkUrl] = useState('');
+  const [deptFileErrorMsg, setDeptFileErrorMsg] = useState<string | null>(null);
+
   // Selected Activity to view Registrants
   const [viewRegistrantsActivityId, setViewRegistrantsActivityId] = useState<string | null>(null);
 
@@ -243,6 +252,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
 
   // COURSES CRUD
   const handleStartEditCourse = (item?: CourseItem) => {
+    setCourseLinkName('');
+    setCourseLinkUrl('');
+    setFileErrorMsg(null);
     if (item) {
       setEditCourseItem(JSON.parse(JSON.stringify(item)));
     } else {
@@ -273,8 +285,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const existingFiles = editCourseItem.pdfFiles || [];
     const loadedFiles = [...existingFiles];
     let loadedCount = 0;
+    let ignoredCount = 0;
     
-    Array.from(files).forEach((file: File) => {
+    const MAX_FILE_SIZE = 350 * 1024; // 350 KB Limit
+    setFileErrorMsg(null);
+
+    const filesArray = Array.from(files);
+    
+    filesArray.forEach((file: File) => {
+      if (file.size > MAX_FILE_SIZE) {
+        ignoredCount++;
+        loadedCount++;
+        setFileErrorMsg(
+          language === 'ar' 
+            ? `تنبيه: تم رفض الملف "${file.name}" لأن حجمه (${(file.size / (1024 * 1024)).toFixed(2)} MB) أكبر من الحد الأقصى المسموح به (350 KB). لحفظ ملفات كبيرة يرجى رفعها على Google Drive أو Telegram أو Mega ووضع رابطها في حقل الرابط الخارجي أدناه.` 
+            : `Uyarı: "${file.name}" dosyası boyutu (${(file.size / (1024 * 1024)).toFixed(2)} MB) izin verilen sınırın (350 KB) üzerinde olduğu için reddedildi. Büyük dosyaları kaydetmek için lütfen Google Drive, Telegram veya Mega'ya yükleyerek aşağıdaki harici bağlantı alanını kullanın.`
+        );
+        if (loadedCount === filesArray.length && loadedFiles.length !== existingFiles.length) {
+          setEditCourseItem({
+            ...editCourseItem,
+            pdfFiles: loadedFiles
+          });
+        }
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target && typeof event.target.result === 'string') {
@@ -282,12 +317,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: file.name,
             url: event.target.result,
-            size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+            size: `${(file.size / 1024).toFixed(0)} KB`,
             type: file.type
           });
           
           loadedCount++;
-          if (loadedCount === files.length) {
+          if (loadedCount === filesArray.length) {
             setEditCourseItem({
               ...editCourseItem,
               pdfFiles: loadedFiles
@@ -297,6 +332,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleAddCourseLink = () => {
+    if (!editCourseItem || !courseLinkName.trim() || !courseLinkUrl.trim()) return;
+    const existingFiles = editCourseItem.pdfFiles || [];
+    
+    let url = courseLinkUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+
+    const newFile = {
+      id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: courseLinkName.trim(),
+      url: url,
+      size: language === 'ar' ? 'رابط سحابي' : 'Bulut Bağlantısı',
+      type: 'url'
+    };
+
+    setEditCourseItem({
+      ...editCourseItem,
+      pdfFiles: [...existingFiles, newFile]
+    });
+
+    setCourseLinkName('');
+    setCourseLinkUrl('');
+    setFileErrorMsg(null);
+    triggerToast(language === 'ar' ? 'تمت إضافة الرابط بنجاح!' : 'Bağlantı başarıyla eklendi!');
   };
 
   const handleRemoveCourseFile = (fileId: string) => {
@@ -309,6 +372,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   };
 
   const handleStartEditDeptAnn = (item?: DeptAnnouncementItem) => {
+    setDeptLinkName('');
+    setDeptLinkUrl('');
+    setDeptFileErrorMsg(null);
     if (item) {
       setEditDeptAnnItem(JSON.parse(JSON.stringify(item)));
     } else {
@@ -340,8 +406,31 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     const existingFiles = editDeptAnnItem.pdfFiles || [];
     const loadedFiles = [...existingFiles];
     let loadedCount = 0;
+    let ignoredCount = 0;
     
-    Array.from(files).forEach((file: File) => {
+    const MAX_FILE_SIZE = 350 * 1024; // 350 KB Limit
+    setDeptFileErrorMsg(null);
+
+    const filesArray = Array.from(files);
+    
+    filesArray.forEach((file: File) => {
+      if (file.size > MAX_FILE_SIZE) {
+        ignoredCount++;
+        loadedCount++;
+        setDeptFileErrorMsg(
+          language === 'ar' 
+            ? `تنبيه: تم رفض الملف "${file.name}" لأن حجمه (${(file.size / (1024 * 1024)).toFixed(2)} MB) أكبر من الحد الأقصى المسموح به (350 KB). يرجى رفعه على Google Drive أو Telegram أو Mega ووضع الرابط أدناه لحفظه بنجاح.` 
+            : `Uyarı: "${file.name}" dosyası boyutu (${(file.size / (1024 * 1024)).toFixed(2)} MB) izin verilen sınırın (350 KB) üzerinde olduğu için reddedildi. Lütfen Google Drive, Telegram veya Mega'ya yükleyerek aşağıdaki alana bağlantısını ekleyin.`
+        );
+        if (loadedCount === filesArray.length && loadedFiles.length !== existingFiles.length) {
+          setEditDeptAnnItem({
+            ...editDeptAnnItem,
+            pdfFiles: loadedFiles
+          });
+        }
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target && typeof event.target.result === 'string') {
@@ -349,12 +438,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
             id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             name: file.name,
             url: event.target.result,
-            size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+            size: `${(file.size / 1024).toFixed(0)} KB`,
             type: file.type
           });
           
           loadedCount++;
-          if (loadedCount === files.length) {
+          if (loadedCount === filesArray.length) {
             setEditDeptAnnItem({
               ...editDeptAnnItem,
               pdfFiles: loadedFiles
@@ -364,6 +453,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       };
       reader.readAsDataURL(file);
     });
+  };
+
+  const handleAddDeptLink = () => {
+    if (!editDeptAnnItem || !deptLinkName.trim() || !deptLinkUrl.trim()) return;
+    const existingFiles = editDeptAnnItem.pdfFiles || [];
+    
+    let url = deptLinkUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+
+    const newFile = {
+      id: `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: deptLinkName.trim(),
+      url: url,
+      size: language === 'ar' ? 'رابط سحابي' : 'Bulut Bağlantısı',
+      type: 'url'
+    };
+
+    setEditDeptAnnItem({
+      ...editDeptAnnItem,
+      pdfFiles: [...existingFiles, newFile]
+    });
+
+    setDeptLinkName('');
+    setDeptLinkUrl('');
+    setDeptFileErrorMsg(null);
+    triggerToast(language === 'ar' ? 'تمت إضافة الرابط بنجاح!' : 'Bağlantı başarıyla eklendi!');
   };
 
   const handleRemoveDeptAnnFile = (fileId: string) => {
@@ -917,20 +1034,116 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <div className="space-y-1.5 pointer-events-none select-none">
                       <Plus className="w-6 h-6 text-slate-400 mx-auto" />
                       <p className="text-xs font-bold text-slate-700">
-                        {language === 'ar' ? 'اضغط هنا أو اسحب الملفات لرفعها' : 'Dosya yüklemek için tıklayın veya sürükleyin'}
+                        {language === 'ar' ? 'اضغط هنا أو اسحب ملفات صغيرة لرفعها مباشرة (الحد الأقصى 350 KB)' : 'Tıklayarak veya sürükleyerek küçük dosyaları doğrudan yükleyin (Maks 350 KB)'}
                       </p>
                       <p className="text-[10px] text-slate-400">
-                        {language === 'ar' ? 'يدعم ملفات PDF والمستندات والملفات المضغوطة والـ Word' : 'PDF, Dokümanlar, Word ve Zip dosyalarını destekler'}
+                        {language === 'ar' ? 'يدعم ملفات PDF والمستندات والـ Word للملفات الصغيرة.' : 'Küçük boyutlu PDF, Doküman ve Word dosyalarını destekler.'}
                       </p>
                     </div>
+                  </div>
+
+                  {/* File Error Message alert */}
+                  {fileErrorMsg && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-semibold leading-relaxed flex items-start gap-2">
+                      <span className="text-amber-500 font-bold text-base leading-none">⚠️</span>
+                      <div>{fileErrorMsg}</div>
+                    </div>
+                  )}
+
+                  {/* Add File via Link Zone */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                    <span className="block text-[11px] font-extrabold text-slate-700 select-none">
+                      {language === 'ar' ? 'إضافة ملف عبر رابط سحابي خارجي (Google Drive, Mega, Telegram):' : 'Harici Bulut Bağlantısı ile Dosya Ekle (Google Drive, Mega, Telegram):'}
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <input
+                          type="text"
+                          placeholder={language === 'ar' ? 'اسم الملف (مثال: محاضرة 1 PDF)' : 'Dosya Adı (Örn: Ders Notu 1)'}
+                          value={courseLinkName}
+                          onChange={(e) => setCourseLinkName(e.target.value)}
+                          className="w-full p-2 border border-slate-200 bg-white rounded-lg font-bold"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={language === 'ar' ? 'رابط الملف السحابي (https://...)' : 'Dosya Bağlantısı (https://...)'}
+                          value={courseLinkUrl}
+                          onChange={(e) => setCourseLinkUrl(e.target.value)}
+                          className="w-full p-2 border border-slate-200 bg-white rounded-lg flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddCourseLink}
+                          disabled={!courseLinkName.trim() || !courseLinkUrl.trim()}
+                          className="px-3.5 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg text-xs transition disabled:opacity-50 select-none"
+                        >
+                          {language === 'ar' ? 'إضافة' : 'Ekle'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 select-none">
+                      {language === 'ar' 
+                        ? 'ملاحظة: هذه هي الطريقة الأفضل والأسرع لمشاركة الملفات الكبيرة لتفادي أي بطء في تحميل الموقع.' 
+                        : 'Not: Büyük dosyaları paylaşmak ve sitenin hızlı kalmasını sağlamak için en iyi ve en hızlı yol budur.'}
+                    </p>
                   </div>
 
                   {/* Uploaded Files List */}
                   {editCourseItem.pdfFiles && editCourseItem.pdfFiles.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        {language === 'ar' ? 'الملفات المرفقة حالياً للدرس:' : 'Mevcut Ekli Ders Dosyaları:'}
-                      </span>
+                      <div className="flex items-center justify-between select-none">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                          {language === 'ar' ? 'الملفات المرفقة حالياً للدرس:' : 'Mevcut Ekli Ders Dosyaları:'}
+                        </span>
+                        {/* Calculate base64 files total size */}
+                        {(() => {
+                          const base64Files = editCourseItem.pdfFiles.filter(f => f.url && f.url.startsWith('data:'));
+                          const totalBase64SizeKB = base64Files.reduce((acc, f) => {
+                            return acc + (f.url.length * 0.75) / 1024;
+                          }, 0);
+                          
+                          if (totalBase64SizeKB > 0) {
+                            return (
+                              <span className={`text-[9px] font-bold ${totalBase64SizeKB > 450 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>
+                                {language === 'ar' 
+                                  ? `حجم الملفات المباشرة: ${totalBase64SizeKB.toFixed(0)} KB` 
+                                  : `Doğrudan Dosya Boyutu: ${totalBase64SizeKB.toFixed(0)} KB`}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+
+                      {/* If total base64 size is high, show clear warning to use Cloud Links */}
+                      {(() => {
+                        const base64Files = editCourseItem.pdfFiles.filter(f => f.url && f.url.startsWith('data:'));
+                        const totalBase64SizeKB = base64Files.reduce((acc, f) => {
+                          return acc + (f.url.length * 0.75) / 1024;
+                        }, 0);
+                        
+                        if (totalBase64SizeKB > 450) {
+                          return (
+                            <div className="p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-lg text-[10px] leading-normal space-y-1 select-none">
+                              <p className="font-extrabold flex items-center gap-1">
+                                <span>⚠️</span>
+                                {language === 'ar' 
+                                  ? 'تنبيه: حجم الملفات المباشرة كبير جداً!' 
+                                  : 'Uyarı: Doğrudan yüklenen dosya boyutu çok yüksek!'}
+                              </p>
+                              <p>
+                                {language === 'ar' 
+                                  ? 'تجاوز حجم الملفات المباشرة 450 KB قد يمنع حفظ المادة في قاعدة البيانات بسبب قيود الحجم. يرجى حذف الملفات الكبيرة المرفوعة واستخدام "رابط سحابي خارجي (تليجرام أو درايف)" بدلاً منها لضمان الحفظ بنجاح.' 
+                                  : 'Doğrudan yüklenen dosyaların 450 KB\'ı aşması, boyut sınırları nedeniyle dersin veri tabanına kaydedilmesini engelleyebilir. Başarılı bir şekilde kaydetmek için lütfen büyük dosyaları silip yerine "Harici Bulut Bağlantısı" kullanın.'}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {editCourseItem.pdfFiles.map((file) => (
                           <div key={file.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs shadow-xs">
@@ -1163,20 +1376,116 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                     <div className="space-y-1.5 pointer-events-none select-none">
                       <Plus className="w-6 h-6 text-slate-400 mx-auto" />
                       <p className="text-xs font-bold text-slate-700">
-                        {language === 'ar' ? 'اضغط هنا أو اسحب الملفات لرفعها' : 'Dosya yüklemek için tıklayın veya sürükleyin'}
+                        {language === 'ar' ? 'اضغط هنا أو اسحب ملفات صغيرة لرفعها مباشرة (الحد الأقصى 350 KB)' : 'Tıklayarak veya sürükleyerek küçük dosyaları doğrudan yükleyin (Maks 350 KB)'}
                       </p>
                       <p className="text-[10px] text-slate-400">
-                        {language === 'ar' ? 'يدعم ملفات PDF، المستندات، الصور والملفات المضغوطة' : 'PDF, Dokümanlar, Görsel ve Zip dosyalarını destekler'}
+                        {language === 'ar' ? 'يدعم ملفات PDF، المستندات والصور للملفات الصغيرة.' : 'Küçük boyutlu PDF, Doküman ve Görsel dosyalarını destekler.'}
                       </p>
                     </div>
+                  </div>
+
+                  {/* File Error Message alert */}
+                  {deptFileErrorMsg && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-semibold leading-relaxed flex items-start gap-2">
+                      <span className="text-amber-500 font-bold text-base leading-none">⚠️</span>
+                      <div>{deptFileErrorMsg}</div>
+                    </div>
+                  )}
+
+                  {/* Add File via Link Zone */}
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+                    <span className="block text-[11px] font-extrabold text-slate-700 select-none">
+                      {language === 'ar' ? 'إضافة ملف عبر رابط سحابي خارجي (Google Drive, Mega, Telegram):' : 'Harici Bulut Bağlantısı ile Dosya Ekle (Google Drive, Mega, Telegram):'}
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <input
+                          type="text"
+                          placeholder={language === 'ar' ? 'اسم الملف (مثال: جدول الامتحانات PDF)' : 'Dosya Adı (Örn: Sınav Takvimi)'}
+                          value={deptLinkName}
+                          onChange={(e) => setDeptLinkName(e.target.value)}
+                          className="w-full p-2 border border-slate-200 bg-white rounded-lg font-bold"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder={language === 'ar' ? 'رابط الملف السحابي (https://...)' : 'Dosya Bağlantısı (https://...)'}
+                          value={deptLinkUrl}
+                          onChange={(e) => setDeptLinkUrl(e.target.value)}
+                          className="w-full p-2 border border-slate-200 bg-white rounded-lg flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddDeptLink}
+                          disabled={!deptLinkName.trim() || !deptLinkUrl.trim()}
+                          className="px-3.5 py-2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg text-xs transition disabled:opacity-50 select-none"
+                        >
+                          {language === 'ar' ? 'إضافة' : 'Ekle'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 select-none">
+                      {language === 'ar' 
+                        ? 'ملاحظة: هذه هي الطريقة الأفضل والأسرع لمشاركة الملفات الكبيرة لتفادي أي بطء في تحميل الموقع.' 
+                        : 'Not: Büyük dosyaları paylaşmak ve sitenin hızlı kalmasını sağlamak için en iyi ve en hızlı yol budur.'}
+                    </p>
                   </div>
 
                   {/* Uploaded Files List */}
                   {editDeptAnnItem.pdfFiles && editDeptAnnItem.pdfFiles.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                        {language === 'ar' ? 'الملفات المرفقة حالياً للإعلان:' : 'Mevcut Ekli Duyuru Dosyaları:'}
-                      </span>
+                      <div className="flex items-center justify-between select-none">
+                        <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                          {language === 'ar' ? 'الملفات المرفقة حالياً للإعلان:' : 'Mevcut Ekli Duyuru Dosyaları:'}
+                        </span>
+                        {/* Calculate base64 files total size */}
+                        {(() => {
+                          const base64Files = editDeptAnnItem.pdfFiles.filter(f => f.url && f.url.startsWith('data:'));
+                          const totalBase64SizeKB = base64Files.reduce((acc, f) => {
+                            return acc + (f.url.length * 0.75) / 1024;
+                          }, 0);
+                          
+                          if (totalBase64SizeKB > 0) {
+                            return (
+                              <span className={`text-[9px] font-bold ${totalBase64SizeKB > 450 ? 'text-red-500 animate-pulse' : 'text-slate-400'}`}>
+                                {language === 'ar' 
+                                  ? `حجم الملفات المباشرة: ${totalBase64SizeKB.toFixed(0)} KB` 
+                                  : `Doğrudan Dosya Boyutu: ${totalBase64SizeKB.toFixed(0)} KB`}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+
+                      {/* If total base64 size is high, show clear warning to use Cloud Links */}
+                      {(() => {
+                        const base64Files = editDeptAnnItem.pdfFiles.filter(f => f.url && f.url.startsWith('data:'));
+                        const totalBase64SizeKB = base64Files.reduce((acc, f) => {
+                          return acc + (f.url.length * 0.75) / 1024;
+                        }, 0);
+                        
+                        if (totalBase64SizeKB > 450) {
+                          return (
+                            <div className="p-2.5 bg-red-50 border border-red-200 text-red-800 rounded-lg text-[10px] leading-normal space-y-1 select-none">
+                              <p className="font-extrabold flex items-center gap-1">
+                                <span>⚠️</span>
+                                {language === 'ar' 
+                                  ? 'تنبيه: حجم الملفات المباشرة كبير جداً!' 
+                                  : 'Uyarı: Doğrudan yüklenen dosya boyutu çok yüksek!'}
+                              </p>
+                              <p>
+                                {language === 'ar' 
+                                  ? 'تجاوز حجم الملفات المباشرة 450 KB قد يمنع حفظ الإعلان في قاعدة البيانات بسبب قيود الحجم. يرجى حذف الملفات الكبيرة المرفوعة واستخدام "رابط سحابي خارجي (تليجرام أو درايف)" بدلاً منها لضمان الحفظ بنجاح.' 
+                                  : 'Doğrudan yüklenen dosyaların 450 KB\'ı aşması, boyut sınırları nedeniyle duyurunun veri tabanına kaydedilmesini engelleyebilir. Başarılı bir şekilde kaydetmek için lütfen büyük dosyaları silip yerine "Harici Bulut Bağlantısı" kullanın.'}
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {editDeptAnnItem.pdfFiles.map((file) => (
                           <div key={file.id} className="flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 text-xs shadow-xs">

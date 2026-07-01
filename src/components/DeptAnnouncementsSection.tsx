@@ -466,31 +466,43 @@ const AnnCard: React.FC<AnnCardProps> = ({
                       )}
                     </div>
                     
-                    <button
-                      onClick={() => handleDownloadFile(file)}
-                      disabled={!!downloadingFileId[file.id]}
-                      className={`px-2 py-0.5 rounded text-[9px] font-extrabold flex items-center gap-1 transition shrink-0 select-none ${
-                        downloadSuccessFileId[file.id]
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : downloadingFileId[file.id]
-                          ? 'bg-slate-100 text-slate-400'
-                          : 'bg-burgundy-50 text-burgundy-700 hover:bg-burgundy-700 hover:text-white'
-                      }`}
-                    >
-                      {downloadSuccessFileId[file.id] ? (
-                        <>
-                          <CheckCircle className="w-2.5 h-2.5" />
-                          <span>{t('actionSuccess')}</span>
-                        </>
-                      ) : downloadingFileId[file.id] ? (
-                        <span className="w-2 h-2 border border-burgundy-700 border-t-transparent rounded-full animate-spin"></span>
-                      ) : (
-                        <>
-                          <Download className="w-2.5 h-2.5" />
-                          <span>{language === 'ar' ? 'تحميل' : 'İndir'}</span>
-                        </>
-                      )}
-                    </button>
+                    {file.url && (file.url.startsWith('http://') || file.url.startsWith('https://') || file.type === 'url') ? (
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2 py-1 rounded text-[9px] font-extrabold flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-700 hover:text-white transition shrink-0 select-none border border-blue-200/50"
+                      >
+                        <ExternalLink className="w-2.5 h-2.5" />
+                        <span>{language === 'ar' ? 'فتح الرابط' : 'Bağlantıyı Aç'}</span>
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => handleDownloadFile(file)}
+                        disabled={!!downloadingFileId[file.id]}
+                        className={`px-2 py-0.5 rounded text-[9px] font-extrabold flex items-center gap-1 transition shrink-0 select-none ${
+                          downloadSuccessFileId[file.id]
+                            ? 'bg-emerald-50 text-emerald-700'
+                            : downloadingFileId[file.id]
+                            ? 'bg-slate-100 text-slate-400'
+                            : 'bg-burgundy-50 text-burgundy-700 hover:bg-burgundy-700 hover:text-white'
+                        }`}
+                      >
+                        {downloadSuccessFileId[file.id] ? (
+                          <>
+                            <CheckCircle className="w-2.5 h-2.5" />
+                            <span>{t('actionSuccess')}</span>
+                          </>
+                        ) : downloadingFileId[file.id] ? (
+                          <span className="w-2 h-2 border border-burgundy-700 border-t-transparent rounded-full animate-spin"></span>
+                        ) : (
+                          <>
+                            <Download className="w-2.5 h-2.5" />
+                            <span>{language === 'ar' ? 'تحميل' : 'İndir'}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

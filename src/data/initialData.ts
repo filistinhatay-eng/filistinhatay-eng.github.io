@@ -1,4 +1,4 @@
-import { NewsItem, CourseItem, ActivityItem, ImportantLink, UniversityInfo, TopAnnouncement, DeptAnnouncementItem } from '../types';
+import { NewsItem, CourseItem, ActivityItem, ImportantLink, UniversityInfo, TopAnnouncement, DeptAnnouncementItem, UniversityNewsItem } from '../types';
 
 export const initialNews: NewsItem[] = [
   {
@@ -664,5 +664,68 @@ export const initialDeptAnnouncements: DeptAnnouncementItem[] = [
       }
     ],
     externalUrl: ""
+  }
+];
+
+export const initialUniversityNews: UniversityNewsItem[] = [
+  {
+    id: 'iste-news-fallback-1',
+    titleTr: 'Uluslararası Öğrenci Başvuruları Başladı!',
+    titleAr: 'بدء استقبال طلبات الطلاب الدوليين في جامعة İSTE!',
+    contentTr: 'İskenderun Teknik Üniversitesi 2026-2027 akademik yılı uluslararası öğrenci başvuru süreci resmi olarak başlamıştır. Adaylar online sistem üzerinden belgelerini teslim edebilirler.',
+    contentAr: 'بدأت رسمياً عملية تقديم طلبات الطلاب الدوليين في جامعة إسكندرون التقنية للعام الدراسي 2026-2027. يمكن للمرشحين تقديم وثائقهم عبر النظام الإلكتروني مباشرة.',
+    date: '2026-06-20',
+    categoryTr: 'Uluslararası',
+    categoryAr: 'شؤون دولية',
+    link: 'https://iste.edu.tr/duyuru/uluslararasi-ogrenci-basvurulari-basladi',
+    isRelevantToForeigners: true
+  },
+  {
+    id: 'iste-news-fallback-2',
+    titleTr: 'Erasmus+ Öğrenim ve Staj Hareketliliği Sonuçları Açıklandı',
+    titleAr: 'إعلان نتائج منح التبادل الطلابي والتدريب Erasmus+',
+    contentTr: 'Dış İlişkiler Koordinatörlüğü tarafından yürütülen Erasmus+ programı öğrenim ve staj hareketliliği başvuru sonuçları öğrenci bilgi sisteminde ilan edilmiştir.',
+    contentAr: 'أعلن مكتب العلاقات الخارجية عن نتائج طلبات برنامج التبادل الدراسي والتدريب المهني Erasmus+ على نظام معلومات الطلاب.',
+    date: '2026-06-18',
+    categoryTr: 'Duyuru',
+    categoryAr: 'إعلان',
+    link: 'https://iste.edu.tr/duyuru/erasmus-sonuclari-aciklandi',
+    isRelevantToForeigners: true
+  },
+  {
+    id: 'iste-news-fallback-3',
+    titleTr: 'Yabancı Uyruklu Öğrenciler İçin Türkçe Yeterlilik Sınavı',
+    titleAr: 'امتحان كفاءة اللغة التركية للطلاب الأجانب (TÖMER)',
+    contentTr: 'İSTE TÖMER bünyesinde yeni kayıt yaptıran yabancı uyruklu öğrenciler için Türkçe Yeterlilik Muafiyet Sınavı 1 Temmuz 2026 tarihinde yapılacaktır.',
+    contentAr: 'سيعقد امتحان الإعفاء وكفاءة اللغة التركية للطلاب الأجانب المسجلين حديثاً في مركز TÖMER بجامعة İSTE في تاريخ 1 يوليو 2026.',
+    date: '2026-06-15',
+    categoryTr: 'Sınav Duyuruları',
+    categoryAr: 'إعلانات الامتحانات',
+    link: 'https://iste.edu.tr/duyuru/tomer-muafiyet-sinavi',
+    isRelevantToForeigners: true
+  },
+  {
+    id: 'iste-news-fallback-4',
+    titleTr: 'Mühendislik Fakültesi Akreditasyon Başarısı',
+    titleAr: 'نجاح اعتماد كلية الهندسة بجامعة إسكندرون التقنية',
+    contentTr: 'Mühendislik ve Doğa Bilimleri Fakültesi bünyesindeki Bilgisayar, Elektrik-Elektronik ve İnşaat Mühendisliği bölümleri MÜDEK tarafından akredite edilmiştir.',
+    contentAr: 'تم اعتماد أقسام هندسة الكمبيوتر، الهندسة الكهربائية والإلكترونية، والهندسة المدنية في كلية الهندسة والعلوم الطبيعية من قبل جمعية تقييم واعتماد البرامج الهندسية MÜDEK.',
+    date: '2026-06-10',
+    categoryTr: 'Haber',
+    categoryAr: 'أخبار',
+    link: 'https://iste.edu.tr/haber/muhendislik-akreditasyon-basarisi',
+    isRelevantToForeigners: false
+  },
+  {
+    id: 'iste-news-fallback-5',
+    titleTr: 'Teknofest Başvurularında İSTE Projelerine Büyük İlgi',
+    titleAr: 'اهتمام كبير بمشاريع جامعة İSTE في طلبات تكنوفست',
+    contentTr: 'Türkiye\'nin en büyük teknoloji festivali Teknofest\'e bu yıl İSTE öğrencilerinden rekor sayıda proje başvurusu yapıldı. Takımlarımıza başarılar dileriz.',
+    contentAr: 'تم تسجيل رقم قياسي في عدد طلبات المشاريع المقدمة من طلاب جامعة İSTE في مهرجان التكنولوجيا الأكبر في تركيا تكنوفست Teknofest هذا العام. نتمنى التوفيق لفرقنا.',
+    date: '2026-06-05',
+    categoryTr: 'Haber',
+    categoryAr: 'أخبار',
+    link: 'https://iste.edu.tr/haber/teknofest-rekordu',
+    isRelevantToForeigners: false
   }
 ];

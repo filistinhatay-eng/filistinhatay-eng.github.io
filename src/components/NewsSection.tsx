@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NewsItem, UniversityNewsItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { initialUniversityNews } from '../data/initialData';
 import { 
   Search, Eye, Calendar, Tag, ArrowLeft, Newspaper, 
   Globe, RefreshCw, ExternalLink, Sparkles, AlertTriangle 
@@ -20,7 +21,7 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ news, incrementViews }
 
   // Dual-mode news switcher ('union' = Union News, 'university' = University Website News)
   const [newsType, setNewsType] = useState<'union' | 'university'>('union');
-  const [univNews, setUnivNews] = useState<UniversityNewsItem[]>([]);
+  const [univNews, setUnivNews] = useState<UniversityNewsItem[]>(initialUniversityNews);
   const [isLoadingUniv, setIsLoadingUniv] = useState(false);
   const [univError, setUnivError] = useState<string | null>(null);
 
@@ -35,27 +36,12 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ news, incrementViews }
   const fetchUniversityNews = async () => {
     setIsLoadingUniv(true);
     setUnivError(null);
-    try {
-      const res = await fetch('/api/university-news');
-      const data = await res.json();
-      if (data.success && data.data) {
-        setUnivNews(data.data);
-      } else {
-        setUnivError(language === 'ar' ? 'فشل تحميل الإعلانات من موقع الجامعة.' : 'Üniversite duyuruları yüklenemedi.');
-      }
-    } catch (err) {
-      console.error(err);
-      setUnivError(language === 'ar' ? 'حدث خطأ أثناء الاتصال بالخادم.' : 'Sunucu ile bağlantı hatası oluştu.');
-    } finally {
+    // Simulate a brief local loading effect to keep the refresh button interactive
+    setTimeout(() => {
+      setUnivNews(initialUniversityNews);
       setIsLoadingUniv(false);
-    }
+    }, 400);
   };
-
-  useEffect(() => {
-    if (newsType === 'university' && univNews.length === 0) {
-      fetchUniversityNews();
-    }
-  }, [newsType]);
 
   // Filtering for Union News
   const filteredNews = news.filter((item) => {

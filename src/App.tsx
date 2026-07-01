@@ -43,182 +43,118 @@ function AppMain() {
     return localStorage.getItem('pales_union_custom_logo') || logoImg;
   });
 
-  // Main Persistent States
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [courses, setCourses] = useState<CourseItem[]>([]);
-  const [deptAnnouncements, setDeptAnnouncements] = useState<DeptAnnouncementItem[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [links, setLinks] = useState<ImportantLink[]>([]);
-  const [univInfo, setUnivInfo] = useState<UniversityInfo>(initialUniversityInfo);
-  const [announcements, setAnnouncements] = useState<TopAnnouncement[]>([]);
-  const [assistants, setAssistants] = useState<any[]>([]);
-
-  // Generic server sync helper
-  const saveToServer = async (updates: any) => {
+  // Main Persistent States initialized directly and synchronously from local storage or initial values
+  const [news, setNews] = useState<NewsItem[]>(() => {
     try {
-      await fetch('/api/site-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates),
-      });
-    } catch (err) {
-      console.error("Failed to save site data to server:", err);
+      const saved = localStorage.getItem('pales_union_news');
+      return saved ? JSON.parse(saved) : initialNews;
+    } catch (e) {
+      return initialNews;
     }
-  };
+  });
 
-  // Load Initial Data from Server with Seeding (No LocalStorage for shared content)
-  useEffect(() => {
-    const initializeData = async () => {
-      let loadedNews = null;
-      let loadedCourses = null;
-      let loadedDeptAnn = null;
-      let loadedActivities = null;
-      let loadedLinks = null;
-      let loadedUniv = null;
-      let loadedAnn = null;
-      let loadedLogo = null;
-      let loadedAssistants = null;
+  const [courses, setCourses] = useState<CourseItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_courses');
+      return saved ? JSON.parse(saved) : initialCourses;
+    } catch (e) {
+      return initialCourses;
+    }
+  });
 
-      try {
-        const res = await fetch('/api/site-data');
-        const data = await res.json();
-        if (data.success && data.siteData) {
-          const sd = data.siteData;
-          loadedNews = sd.news;
-          loadedCourses = sd.courses;
-          loadedDeptAnn = sd.deptAnnouncements;
-          loadedActivities = sd.activities;
-          loadedLinks = sd.links;
-          loadedUniv = sd.univInfo;
-          loadedAnn = sd.announcements;
-          loadedLogo = sd.logo;
-          loadedAssistants = sd.assistants;
-        }
-      } catch (err) {
-        console.error("Error loading server site data", err);
-      }
+  const [deptAnnouncements, setDeptAnnouncements] = useState<DeptAnnouncementItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_dept_announcements');
+      return saved ? JSON.parse(saved) : initialDeptAnnouncements;
+    } catch (e) {
+      return initialDeptAnnouncements;
+    }
+  });
 
-      const toSave: any = {};
+  const [activities, setActivities] = useState<ActivityItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_activities');
+      return saved ? JSON.parse(saved) : initialActivities;
+    } catch (e) {
+      return initialActivities;
+    }
+  });
 
-      // 1. News
-      if (loadedNews) {
-        setNews(loadedNews);
-      } else {
-        setNews(initialNews);
-        toSave.news = initialNews;
-      }
+  const [links, setLinks] = useState<ImportantLink[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_links');
+      return saved ? JSON.parse(saved) : initialImportantLinks;
+    } catch (e) {
+      return initialImportantLinks;
+    }
+  });
 
-      // 2. Courses
-      if (loadedCourses) {
-        setCourses(loadedCourses);
-      } else {
-        setCourses(initialCourses);
-        toSave.courses = initialCourses;
-      }
+  const [univInfo, setUnivInfo] = useState<UniversityInfo>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_univ_info');
+      return saved ? JSON.parse(saved) : initialUniversityInfo;
+    } catch (e) {
+      return initialUniversityInfo;
+    }
+  });
 
-      // 3. Department Announcements
-      if (loadedDeptAnn) {
-        setDeptAnnouncements(loadedDeptAnn);
-      } else {
-        setDeptAnnouncements(initialDeptAnnouncements);
-        toSave.deptAnnouncements = initialDeptAnnouncements;
-      }
+  const [announcements, setAnnouncements] = useState<TopAnnouncement[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_announcements');
+      return saved ? JSON.parse(saved) : initialAnnouncements;
+    } catch (e) {
+      return initialAnnouncements;
+    }
+  });
 
-      // 4. Activities
-      if (loadedActivities) {
-        setActivities(loadedActivities);
-      } else {
-        setActivities(initialActivities);
-        toSave.activities = initialActivities;
-      }
+  const [assistants, setAssistants] = useState<any[]>(() => {
+    try {
+      const saved = localStorage.getItem('pales_union_assistants');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
-      // 5. Links
-      if (loadedLinks) {
-        setLinks(loadedLinks);
-      } else {
-        setLinks(initialImportantLinks);
-        toSave.links = initialImportantLinks;
-      }
-
-      // 6. University Info
-      if (loadedUniv) {
-        setUnivInfo(loadedUniv);
-      } else {
-        setUnivInfo(initialUniversityInfo);
-        toSave.univInfo = initialUniversityInfo;
-      }
-
-      // 7. Announcements
-      if (loadedAnn) {
-        setAnnouncements(loadedAnn);
-      } else {
-        setAnnouncements(initialAnnouncements);
-        toSave.announcements = initialAnnouncements;
-      }
-
-      // 8. Logo
-      if (loadedLogo && !loadedLogo.includes('hatay_palestine_students_logo')) {
-        setLogo(loadedLogo);
-      } else {
-        setLogo(logoImg);
-        toSave.logo = logoImg;
-      }
-
-      // 9. Assistants
-      if (loadedAssistants) {
-        setAssistants(loadedAssistants);
-      } else {
-        setAssistants([]);
-        toSave.assistants = [];
-      }
-
-      if (Object.keys(toSave).length > 0) {
-        saveToServer(toSave);
-      }
-    };
-
-    initializeData();
-  }, []);
-
-  // Sync helpers with server sync
+  // Sync helpers with local storage to persist modifications directly and instantly
   const updateNewsState = (newNews: NewsItem[]) => {
     setNews(newNews);
-    saveToServer({ news: newNews });
+    localStorage.setItem('pales_union_news', JSON.stringify(newNews));
   };
 
   const updateCoursesState = (newCourses: CourseItem[]) => {
     setCourses(newCourses);
-    saveToServer({ courses: newCourses });
+    localStorage.setItem('pales_union_courses', JSON.stringify(newCourses));
   };
 
   const updateDeptAnnState = (newDeptAnns: DeptAnnouncementItem[]) => {
     setDeptAnnouncements(newDeptAnns);
-    saveToServer({ deptAnnouncements: newDeptAnns });
+    localStorage.setItem('pales_union_dept_announcements', JSON.stringify(newDeptAnns));
   };
 
   const updateActivitiesState = (newActs: ActivityItem[]) => {
     setActivities(newActs);
-    saveToServer({ activities: newActs });
+    localStorage.setItem('pales_union_activities', JSON.stringify(newActs));
   };
 
   const updateLinksState = (newLinks: ImportantLink[]) => {
     setLinks(newLinks);
-    saveToServer({ links: newLinks });
+    localStorage.setItem('pales_union_links', JSON.stringify(newLinks));
   };
 
   const updateUnivState = (newUniv: UniversityInfo) => {
     setUnivInfo(newUniv);
-    saveToServer({ univInfo: newUniv });
+    localStorage.setItem('pales_union_univ_info', JSON.stringify(newUniv));
   };
 
   const updateAnnState = (newAnns: TopAnnouncement[]) => {
     setAnnouncements(newAnns);
-    saveToServer({ announcements: newAnns });
+    localStorage.setItem('pales_union_announcements', JSON.stringify(newAnns));
   };
 
   const updateAssistantsState = (newAssistants: any[]) => {
     setAssistants(newAssistants);
-    saveToServer({ assistants: newAssistants });
+    localStorage.setItem('pales_union_assistants', JSON.stringify(newAssistants));
   };
 
   // ADMIN OPERATIONS: NEWS
@@ -414,7 +350,7 @@ function AppMain() {
             assistants={assistants}
             onSaveLogo={(newLogo: string) => {
               setLogo(newLogo);
-              saveToServer({ logo: newLogo });
+              localStorage.setItem('pales_union_custom_logo', newLogo);
             }}
             onSaveNews={handleSaveNewsItem}
             onDeleteNews={handleDeleteNewsItem}
